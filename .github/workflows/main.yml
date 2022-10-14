@@ -94,6 +94,7 @@ jobs:
           release: true
           update: false
           install: >-
+            p7zip
             zip
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-zstd
