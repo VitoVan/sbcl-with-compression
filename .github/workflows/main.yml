@@ -1,4 +1,4 @@
-name: Windows
+name: CI
 
 on:
   push:
@@ -7,7 +7,77 @@ on:
       - "test-*"
 
 jobs:
-  build:
+
+  linux:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: install dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install build-essential -y
+          sudo apt install sbcl zstd -y
+
+      - name: build
+        run: |
+          curl -OL http://downloads.sourceforge.net/project/sbcl/sbcl/2.2.9/sbcl-2.2.9-source.tar.bz2
+          bzip2 -cd sbcl-2.2.9-source.tar.bz2 | tar xvf -
+          cd sbcl-2.2.9
+          sh make.sh --with-fancy --with-sb-core-compression
+
+      - name: zip install_root
+        run: |
+          mkdir install_root
+          cd sbcl-2.2.9
+          INSTALL_ROOT=../install_root sh install.sh
+          cd ..
+          zip -r -9 7z a sbcl-2.2.9-install_root.zip install_root
+
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          prerelease: true
+          files: |
+            *.zip
+          
+
+  macos:
+
+    # The type of runner that the job will run on
+    runs-on: macos-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: install
+        shell: bash
+        run: |
+          brew install sbcl
+
+      - name: zip install_root
+        shell: bash
+        run: |
+          export INSTALL_ROOT=`brew info sbcl | grep /usr/local/Cellar | awk '{print $1}'`
+          echo $INSTALL_ROOT
+          cp -r $INSTALL_ROOT ./install_root
+          zip -r -9 install_root.zip ./install_root
+
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          prerelease: true
+          files: |
+            *.zip
+
+  windows:
 
     runs-on: windows-latest
 
@@ -16,45 +86,49 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
-    - uses: msys2/setup-msys2@v2
-      with:
-        location: D:\
-        release: true
-        update: false
-        install: >-
-          p7zip
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-zstd
-          make
-          diffutils
-          wget
-          git
+      - uses: msys2/setup-msys2@v2
+        with:
+          location: D:\
+          release: true
+          update: false
+          install: >-
+            zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-zstd
+            make
+            diffutils
+            wget
+            git
 
-    - name: build
-      run: |
-        wget http://prdownloads.sourceforge.net/sbcl/sbcl-2.2.7-x86-64-windows-binary.msi
-        7z x sbcl-2.2.7-x86-64-windows-binary.msi -Osbcl-2.2.7-bin && rm sbcl-2.2.7-x86-64-windows-binary.msi
-        wget http://downloads.sourceforge.net/project/sbcl/sbcl/2.2.9/sbcl-2.2.9-source.tar.bz2
-        bzip2 -cd sbcl-2.2.9-source.tar.bz2 | tar xvf -
-        cd sbcl-2.2.9
-        PATH=$PATH:"../sbcl-2.2.7-bin/" SBCL_HOME="../sbcl-2.2.7-bin/" sh make.sh --xc-host='sbcl --lose-on-corruption --disable-ldb --disable-debugger' --with-fancy --with-sb-core-compression
+      - name: build
+        run: |
+          wget http://prdownloads.sourceforge.net/sbcl/sbcl-2.2.7-x86-64-windows-binary.msi
+          7z x sbcl-2.2.7-x86-64-windows-binary.msi -Osbcl-2.2.7-bin && rm sbcl-2.2.7-x86-64-windows-binary.msi
+          wget http://downloads.sourceforge.net/project/sbcl/sbcl/2.2.9/sbcl-2.2.9-source.tar.bz2
+          bzip2 -cd sbcl-2.2.9-source.tar.bz2 | tar xvf -
+          cd sbcl-2.2.9
+          PATH=$PATH:"../sbcl-2.2.7-bin/" SBCL_HOME="../sbcl-2.2.7-bin/" sh make.sh --xc-host='sbcl --lose-on-corruption --disable-ldb --disable-debugger' --with-fancy --with-sb-core-compression
 
-    - name: zip output
-      run: |
-        7z a sbcl-2.2.9-pre-made.7z sbcl-2.2.9
+      - name: zip install_root
+        run: |
+          mkdir install_root
+          cd sbcl-2.2.9
+          INSTALL_ROOT=../install_root sh install.sh
+          cd ..
+          zip -r -9 7z a sbcl-2.2.9-install_root.zip install_root
 
-    - name: make installer
-      run: |
-        cd sbcl-2.2.9
-        ./make-windows-installer.sh
-        mv output/*msi ../
+      - name: make installer
+        run: |
+          cd sbcl-2.2.9
+          ./make-windows-installer.sh
+          mv output/*msi ../
 
-    - name: GH Release
-      uses: softprops/action-gh-release@v0.1.14
-      with:
-        prerelease: true
-        files: |
-          *.msi
-          *.7z
+      - name: GH Release
+        uses: softprops/action-gh-release@v0.1.14
+        with:
+          prerelease: true
+          files: |
+            *.msi
+            *.zip
