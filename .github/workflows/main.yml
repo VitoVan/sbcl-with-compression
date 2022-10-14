@@ -1,0 +1,60 @@
+name: Windows
+
+on:
+  push:
+    tags:
+      - "sbcl-*"
+      - "test-*"
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: msys2/setup-msys2@v2
+      with:
+        location: D:\
+        release: true
+        update: false
+        install: >-
+          p7zip
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-zstd
+          make
+          diffutils
+          wget
+          git
+
+    - name: build
+      run: |
+        wget http://prdownloads.sourceforge.net/sbcl/sbcl-2.2.7-x86-64-windows-binary.msi
+        7z x sbcl-2.2.7-x86-64-windows-binary.msi -Osbcl-2.2.7-bin && rm sbcl-2.2.7-x86-64-windows-binary.msi
+        wget http://downloads.sourceforge.net/project/sbcl/sbcl/2.2.9/sbcl-2.2.9-source.tar.bz2
+        bzip2 -cd sbcl-2.2.9-source.tar.bz2 | tar xvf -
+        cd sbcl-2.2.9
+        PATH=$PATH:"../sbcl-2.2.7-bin/" SBCL_HOME="../sbcl-2.2.7-bin/" sh make.sh --xc-host='sbcl --lose-on-corruption --disable-ldb --disable-debugger' --with-fancy --with-sb-core-compression
+
+    - name: zip output
+      run: |
+        7z a sbcl-2.2.9-pre-made.7z sbcl-2.2.9
+
+    - name: make installer
+      run: |
+        cd sbcl-2.2.9
+        ./make-windows-installer.sh
+        mv output/*msi ../
+
+    - name: GH Release
+      uses: softprops/action-gh-release@v0.1.14
+      with:
+        prerelease: true
+        files: |
+          *.msi
+          *.7z
