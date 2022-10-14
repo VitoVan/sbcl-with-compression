@@ -65,14 +65,24 @@ jobs:
         run: |
           brew install sbcl
 
-      - name: zip install_root
-        shell: bash
+      - name: build
         run: |
-          export INSTALL_ROOT=`brew info sbcl | grep /usr/local/Cellar | awk '{print $1}'`
+          curl -OL http://downloads.sourceforge.net/project/sbcl/sbcl/2.2.9/sbcl-2.2.9-source.tar.bz2
+          bzip2 -cd sbcl-2.2.9-source.tar.bz2 | tar xvf -
+          cd sbcl-2.2.9
+          sh make.sh --with-fancy --with-sb-core-compression
+
+      - name: zip install_root
+        run: |
+          set -x
+          cd sbcl-2.2.9
+          export INSTALL_ROOT=$HOME/install_root
+          sh install.sh
+          cd ..
           echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
           zip -r -9 install_root-${RUNNER_OS}.zip ./install_root
-
+          
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
         with:
