@@ -34,8 +34,9 @@ jobs:
         run: |
           mkdir install_root
           cd sbcl-2.2.9
-          INSTALL_ROOT=../install_root sh install.sh
+          INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
+          cp -r $INSTALL_ROOT ./install_root
           zip -r -9 7z a sbcl-2.2.9-install_root.zip install_root
 
       - name: GH Release
@@ -116,9 +117,10 @@ jobs:
         run: |
           mkdir install_root
           cd sbcl-2.2.9
-          INSTALL_ROOT=../install_root sh install.sh
+          INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
-          zip -r -9 7z a sbcl-2.2.9-install_root.zip install_root
+          cp -r $INSTALL_ROOT ./install_root
+          zip -r -9 7z a sbcl-2.2.9-install_root.zip ../install_root
 
       - name: make installer
         run: |
