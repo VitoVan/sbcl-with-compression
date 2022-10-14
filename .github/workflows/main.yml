@@ -34,7 +34,8 @@ jobs:
         run: |
           set -x
           cd sbcl-2.2.9
-          export INSTALL_ROOT=$HOME/install_root sh install.sh
+          export INSTALL_ROOT=$HOME/install_root
+          sh install.sh
           cd ..
           echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
@@ -118,7 +119,8 @@ jobs:
         run: |
           set -x
           cd sbcl-2.2.9
-          export INSTALL_ROOT=$HOME/install_root sh install.sh
+          export INSTALL_ROOT=$HOME/install_root
+          sh install.sh
           cd ..
           echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
