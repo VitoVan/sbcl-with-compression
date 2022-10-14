@@ -36,8 +36,9 @@ jobs:
           cd sbcl-2.2.9
           INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
+          echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
-          zip -r -9 7z a sbcl-2.2.9-install_root.zip install_root
+          zip -r -9 install_root-${RUNNER_OS}.zip ./install_root
 
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
@@ -69,7 +70,7 @@ jobs:
           export INSTALL_ROOT=`brew info sbcl | grep /usr/local/Cellar | awk '{print $1}'`
           echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
-          zip -r -9 install_root.zip ./install_root
+          zip -r -9 install_root-${RUNNER_OS}.zip ./install_root
 
       - name: GH Release
         uses: softprops/action-gh-release@v0.1.14
@@ -119,8 +120,9 @@ jobs:
           cd sbcl-2.2.9
           INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
+          echo $INSTALL_ROOT
           cp -r $INSTALL_ROOT ./install_root
-          zip -r -9 7z a sbcl-2.2.9-install_root.zip ../install_root
+          zip -r -9 install_root-${RUNNER_OS}.zip ./install_root
 
       - name: make installer
         run: |
