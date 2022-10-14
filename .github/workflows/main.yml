@@ -32,7 +32,6 @@ jobs:
 
       - name: zip install_root
         run: |
-          mkdir install_root
           cd sbcl-2.2.9
           INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
@@ -116,7 +115,6 @@ jobs:
 
       - name: zip install_root
         run: |
-          mkdir install_root
           cd sbcl-2.2.9
           INSTALL_ROOT=$HOME/install_root sh install.sh
           cd ..
